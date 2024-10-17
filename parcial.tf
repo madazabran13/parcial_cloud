@@ -1,7 +1,4 @@
-# Ejercicio: Crear VPC, subredes (4) public y private, tabla de rutas, grupo de seguridad
-
-
-# vpc
+# VPC
 resource "aws_vpc" "main" {
     cidr_block = "10.0.0.0/16"
 
@@ -10,27 +7,22 @@ resource "aws_vpc" "main" {
     }
 }
 
-# subredes:
-# publica 1
+# Subredes públicas
 resource "aws_subnet" "subnet1" {
-    vpc_id            = aws_vpc.main.id
-    cidr_block        = "10.0.1.0/24"
-    availability_zone = "us-east-1a"
-
-    # defino que sea publica
+    vpc_id                  = aws_vpc.main.id
+    cidr_block              = "10.0.1.0/24"
+    availability_zone       = "us-east-1a"
     map_public_ip_on_launch = true
 
     tags = {
         Name = "PUBLIC1"
     }
 }
-# publica 2
-resource "aws_subnet" "subnet2" {
-    vpc_id            = aws_vpc.main.id
-    cidr_block        = "10.0.2.0/24"
-    availability_zone = "us-east-1b"
 
-    # defino que sea publica
+resource "aws_subnet" "subnet2" {
+    vpc_id                  = aws_vpc.main.id
+    cidr_block              = "10.0.2.0/24"
+    availability_zone       = "us-east-1b"
     map_public_ip_on_launch = true 
 
     tags = {
@@ -38,8 +30,7 @@ resource "aws_subnet" "subnet2" {
     }
 }
 
-
-# privada 1
+# Subredes privadas
 resource "aws_subnet" "subnet3" {
     vpc_id            = aws_vpc.main.id
     cidr_block        = "10.0.3.0/24"
@@ -49,7 +40,7 @@ resource "aws_subnet" "subnet3" {
         Name = "PRIVATE1"
     }
 }
-# privada 2
+
 resource "aws_subnet" "subnet4" {
     vpc_id            = aws_vpc.main.id
     cidr_block        = "10.0.4.0/24"
@@ -60,44 +51,7 @@ resource "aws_subnet" "subnet4" {
     }
 }
 
-
-# tabla de enrutamiento
-resource "aws_route_table" "main" {
-    vpc_id = aws_vpc.main.id
-
-    route {
-        cidr_block = "0.0.0.0/0"
-        gateway_id = aws_internet_gateway.main.id
-    }
-
-    tags = {
-        Name = "TABLE_ROUT"
-    }
-}
-
-# enlazo la tabla con las subredes
-resource "aws_route_table_association" "subnet1" {
-    subnet_id      = aws_subnet.subnet1.id
-    route_table_id = aws_route_table.main.id
-}
-
-resource "aws_route_table_association" "subnet2" {
-    subnet_id      = aws_subnet.subnet2.id
-    route_table_id = aws_route_table.main.id
-}
-
-resource "aws_route_table_association" "subnet3" {
-    subnet_id      = aws_subnet.subnet3.id
-    route_table_id = aws_route_table.main.id
-}
-
-resource "aws_route_table_association" "subnet4" {
-    subnet_id      = aws_subnet.subnet4.id
-    route_table_id = aws_route_table.main.id
-}
-
-
-# Gateway de internet
+# Internet Gateway
 resource "aws_internet_gateway" "main" {
     vpc_id = aws_vpc.main.id
 
@@ -106,8 +60,57 @@ resource "aws_internet_gateway" "main" {
     }
 }
 
+# Tabla de enrutamiento pública
+resource "aws_route_table" "public" {
+    vpc_id = aws_vpc.main.id
 
-# grupo de seguridad
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.main.id
+    }
+
+    tags = {
+        Name = "PUBLIC_ROUTE_TABLE"
+    }
+}
+
+# Tabla de enrutamiento privada
+resource "aws_route_table" "private" {
+    vpc_id = aws_vpc.main.id
+
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.main.id
+    }
+
+    tags = {
+        Name = "PRIVATE_ROUTE_TABLE"
+    }
+}
+
+# Asociaciones de tabla de enrutamiento pública
+resource "aws_route_table_association" "public1" {
+    subnet_id      = aws_subnet.subnet1.id
+    route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public2" {
+    subnet_id      = aws_subnet.subnet2.id
+    route_table_id = aws_route_table.public.id
+}
+
+# Asociaciones de tabla de enrutamiento privada
+resource "aws_route_table_association" "private1" {
+    subnet_id      = aws_subnet.subnet3.id
+    route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private2" {
+    subnet_id      = aws_subnet.subnet4.id
+    route_table_id = aws_route_table.private.id
+}
+
+# Grupo de seguridad
 resource "aws_security_group" "main" {
     vpc_id = aws_vpc.main.id
 
